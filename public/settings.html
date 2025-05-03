@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardian Panel - Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Custom styles */
+        body {
+            background-color: #111827; /* bg-gray-900 */
+            color: #d1d5db; /* text-gray-300 */
+        }
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+        }
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .toast {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 0.375rem; /* rounded-md */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
+            color: white;
+            min-width: 250px;
+        }
+        .toast.success { background-color: #10b981; /* bg-green-500 */ }
+        .toast.error { background-color: #ef4444; /* bg-red-500 */ }
+        .toast.warning { background-color: #f59e0b; /* bg-yellow-500 */ }
+        .toast.info { background-color: #3b82f6; /* bg-blue-500 */ }
+        .toast-icon { margin-right: 0.75rem; /* mr-3 */ }
+        .toast-content { flex-grow: 1; }
+        .toast-title { font-weight: 600; /* font-semibold */ }
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="sidebar fixed inset-y-0 left-0 z-30 w-64 bg-gray-800 text-gray-300 p-4 space-y-6 md:relative md:translate-x-0">
+        <div class="flex items-center justify-between">
+            <h2 class="text-2xl font-semibold text-white">Guardian Panel</h2>
+            <button class="md:hidden menu-toggle text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <nav class="space-y-2">
+            <a href="/dashboard.html" class="flex items-center px-3 py-2 hover:bg-gray-700 rounded-md">
+                <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
+            </a>
+            <a href="/settings.html" class="flex items-center px-3 py-2 bg-gray-700 text-white rounded-md">
+                <i class="fas fa-cog mr-3"></i> Settings
+            </a>
+            <a href="#" id="notificationHistoryLink" class="flex items-center px-3 py-2 hover:bg-gray-700 rounded-md">
+                 <i class="fas fa-bell mr-3"></i> Notifications
+             </a>
+            <button id="logoutButton" class="w-full flex items-center px-3 py-2 text-red-400 hover:bg-red-700 hover:text-white rounded-md mt-auto">
+                <i class="fas fa-sign-out-alt mr-3"></i> Logout
+            </button>
+        </nav>
+        <div class="text-xs text-center text-gray-500 absolute bottom-4 left-0 right-0">
+            Dev by @SisuryaOfficial - Modern UI
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Header -->
+        <header class="bg-gray-800 shadow-md p-4 flex items-center justify-between md:hidden">
+            <button class="menu-toggle text-gray-400 hover:text-white">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="text-xl font-semibold text-white">Settings</h1>
+            <div></div> <!-- Spacer -->
+        </header>
+
+        <!-- Content Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+            <h1 class="text-2xl font-semibold text-white mb-6 hidden md:block">Settings</h1>
+
+            <div class="max-w-2xl mx-auto bg-gray-800 rounded-lg shadow-md p-8">
+                <form id="settingsForm" class="space-y-6">
+                    <div>
+                        <label for="telegramToken" class="block text-sm font-medium text-gray-400">Telegram Bot Token</label>
+                        <input type="password" id="telegramToken" name="telegramToken" required
+                               class="w-full px-3 py-2 mt-1 text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Enter your Telegram Bot Token">
+                    </div>
+                    <div>
+                        <label for="telegramUserId" class="block text-sm font-medium text-gray-400">Owner Telegram User ID</label>
+                        <input type="text" id="telegramUserId" name="telegramUserId" required
+                               class="w-full px-3 py-2 mt-1 text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Enter your Telegram User ID (Owner ID)">
+                    </div>
+                    <div>
+                        <label for="telegramNotificationId" class="block text-sm font-medium text-gray-400">Additional Notification ID (Optional)</label>
+                        <input type="text" id="telegramNotificationId" name="telegramNotificationId"
+                               class="w-full px-3 py-2 mt-1 text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Enter additional Telegram ID for notifications">
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="enableSurya" name="enableSurya"
+                               class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500">
+                        <label for="enableSurya" class="ml-2 block text-sm text-gray-400">Enable Additional Notifications</label>
+                    </div>
+                    <div>
+                        <button type="submit"
+                                class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition duration-150 ease-in-out">
+                            Save Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load current settings (if available - requires backend endpoint)
+            // fetch('/api/settings/current') // Example: Need to implement this endpoint
+            //     .then(res => res.json())
+            //     .then(data => {
+            //         if(data.success) {
+            //             document.getElementById('telegramToken').value = data.settings.token || '';
+            //             document.getElementById('telegramUserId').value = data.settings.id || '';
+            //             document.getElementById('telegramNotificationId').value = data.settings.surya || '';
+            //             document.getElementById('enableSurya').checked = data.settings.enableSurya || false;
+            //         }
+            //     })
+            //     .catch(err => console.error('Error fetching current settings:', err));
+
+            // Logout functionality
+            const logoutButton = document.getElementById('logoutButton');
+            if(logoutButton) {
+                logoutButton.addEventListener('click
+(Content truncated due to size limit. Use line ranges to read in chunks)

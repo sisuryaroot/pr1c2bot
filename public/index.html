@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sadap Web</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .landing-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .landing-logo {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .landing-title {
+            font-size: 2.5rem;
+            color: var(--text-on-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .landing-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-on-primary);
+            opacity: 0.8;
+            margin-bottom: 2rem;
+            max-width: 800px;
+        }
+        
+        .landing-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .landing-btn {
+            padding: 0.75rem 2rem;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            text-decoration: none;
+            transition: all var(--transition-speed);
+        }
+        
+        .landing-btn-primary {
+            background-color: var(--secondary-color);
+            color: var(--text-on-secondary);
+        }
+        
+        .landing-btn-primary:hover {
+            background-color: var(--secondary-light);
+        }
+        
+        .landing-btn-secondary {
+            background-color: transparent;
+            color: var(--text-on-primary);
+            border: 2px solid var(--text-on-primary);
+        }
+        
+        .landing-btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .landing-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin-top: 2rem;
+        }
+        
+        .feature-card {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform var(--transition-speed);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .feature-title {
+            font-size: 1.25rem;
+            color: var(--text-on-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .feature-description {
+            color: var(--text-on-primary);
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .landing-buttons {
+                flex-direction: column;
+            }
+            
+            .landing-title {
+                font-size: 2rem;
+            }
+            
+            .landing-subtitle {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="landing-container">
+        <div class="landing-logo">
+            <i class="fas fa-shield-alt"></i>
+        </div>
+        <h1 class="landing-title">Sadap Web</h1>
+        <p class="landing-subtitle">Platform monitoring perangkat Android dengan tampilan yang modern dan fitur lengkap. Pantau dan kendalikan perangkat target dengan mudah melalui antarmuka web yang intuitif.</p>
+        
+        <div class="landing-buttons">
+            <a href="/login" class="landing-btn landing-btn-primary">Masuk</a>
+            <a href="/dashboard" class="landing-btn landing-btn-secondary">Dashboard</a>
+        </div>
+        
+        <div class="landing-features">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h3 class="feature-title">Monitoring Perangkat</h3>
+                <p class="feature-description">Pantau informasi perangkat, aplikasi terinstal, dan aktivitas pengguna secara real-time.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-camera"></i>
+                </div>
+                <h3 class="feature-title">Akses Kamera</h3>
+                <p class="feature-description">Akses kamera depan dan belakang perangkat target untuk mengambil foto atau merekam video.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-microphone"></i>
+                </div>
+                <h3 class="feature-title">Rekam Suara</h3>
+                <p class="feature-description">Rekam suara dari mikrofon perangkat target untuk mendengarkan percakapan di sekitarnya.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-sms"></i>
+                </div>
+                <h3 class="feature-title">Akses SMS</h3>
+                <p class="feature-description">Lihat pesan SMS masuk dan keluar, serta kirim pesan dari perangkat target.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <h3 class="feature-title">Pelacakan Lokasi</h3>
+                <p class="feature-description">Lacak lokasi perangkat target secara real-time dengan akurasi tinggi.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h3 class="feature-title">Integrasi Telegram</h3>
+                <p class="feature-description">Terima notifikasi dan kendalikan perangkat target melalui bot Telegram.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/js/main.js"></script>
+</body>
+</html>
